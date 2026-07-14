@@ -1,0 +1,78 @@
+---
+# Copyright: (c) 2026, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+DOCUMENTATION:
+  module: status_info
+  short_description: Get the status and version of WSL and any distributions
+  description:
+    - Returns information about Windows Subsystem for Linux (WSL) and distributions.
+    - Includes the defaults for the WSL install, as well as specific details about distributions.
+    - Can be used to list online distributions as well.
+
+  extends_documentation_fragment:
+    - ansible.builtin.action_common_attributes
+    - microsoft.wsl.wsl_command
+
+  options:
+    gather_online:
+      description:
+        - If true, the `--online` flag will be used when gathering information about distributions.
+        - This means that all available distributions, and not just those installed locally, will be listed.
+      type: bool
+      default: false
+
+  author:
+    - Mike Morency (@mikemorency)
+
+EXAMPLES: |
+  - name: Get the status of a WSL install
+    microsoft.wsl.status_info:
+
+  - name: Get the status of all available distributions
+    microsoft.wsl.status_info:
+      gather_online: true
+
+RETURN:
+  default_version:
+    description:
+      - The default version for WSL instances
+      - If no default version is found, this is null
+    type: int
+    returned: always
+    sample: 2
+
+  default_distribution:
+    description:
+      - The default distribution if one is defined
+      - If no default is defined, this is null
+    type: str
+    returned: always
+    sample: Ubuntu
+
+  distributions:
+    description:
+      - A dictionary with nested C(local) and C(online) keys, each containing a dictionary of WSL distributions keyed by name.
+      - The C(local) key is always returned.
+      - The C(online) key is only returned if O(gather_online) is true.
+    returned: always
+    type: dict
+    sample:
+      local:
+        Ubuntu:
+          name: Ubuntu
+          state: Running
+          version: 2
+          is_default: true
+        Debian:
+          name: Debian
+          state: Stopped
+          version: 2
+          is_default: false
+      online:
+        Debian:
+          friendly_name: "Debian GNU/Linux"
+          name: "Debian"
+        FedoraLinux-43:
+          friendly_name: "Fedora Linux 43"
+          name: "FedoraLinux-43"

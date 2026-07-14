@@ -1,0 +1,28 @@
+---
+- name: Test defaults
+  microsoft.wsl.status_info:
+  register: _defaults
+
+- name: Test all options
+  microsoft.wsl.status_info:
+    gather_online: true
+    log_command_output: true
+  register: _all_options
+
+- name: Assert
+  ansible.builtin.assert:
+    that:
+      - _defaults.default_version is defined
+      - _defaults.default_distribution is defined
+      - _defaults.distributions.local['Ubuntu'] is defined
+      - _defaults.distributions.online is not defined
+      - _defaults.stdout is not defined
+      - _defaults.stderr is not defined
+      - _all_options.default_version == _defaults.default_version
+      - _all_options.default_distribution == _defaults.default_distribution
+      - _all_options.stdout != ""
+      - _all_options.stdout_lines | length > 1
+      - _all_options.stderr is defined
+      - _all_options.distributions.online is defined
+      - _all_options.distributions.online | length > 1
+      - _all_options.distributions.local['Ubuntu'] is defined

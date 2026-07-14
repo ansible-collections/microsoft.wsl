@@ -22,6 +22,6 @@ build_ignore:
   - changelogs/.plugin-cache.yaml
   - tests/integration/inventory.winrm
   # AI
-  - claude/
-  - .lola/
+  - .claude
+  - .lola
   - CLAUDE.md

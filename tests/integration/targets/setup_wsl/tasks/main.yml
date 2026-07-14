@@ -1,0 +1,11 @@
+- name: Ensure wsl is installed
+  block:
+    - name: Check WSL status
+      ansible.windows.win_shell: wsl --status
+  rescue:
+    - name: install wsl
+      ansible.windows.win_shell: wsl --install
+      failed_when: false
+
+    - name: reboot
+      ansible.windows.win_reboot: {}
