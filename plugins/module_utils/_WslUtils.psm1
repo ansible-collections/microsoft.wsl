@@ -25,15 +25,15 @@ function Test-WslInstall {
 }
 
 
-<#
-.SYNOPSIS
-    Splits a block of text into trimmed, non-empty lines.
-.PARAMETER text
-    The raw text to split, typically stdout or stderr from a process.
-.OUTPUTS
-    System.String[]. An array of trimmed, non-empty lines.
-#>
 function Split-StdText {
+    <#
+    .SYNOPSIS
+        Splits a block of text into trimmed, non-empty lines.
+    .PARAMETER text
+        The raw text to split, typically stdout or stderr from a process.
+    .OUTPUTS
+        System.String[]. An array of trimmed, non-empty lines.
+    #>
     param (
         [Parameter(Mandatory)]
         [ValidateNotNull()]
