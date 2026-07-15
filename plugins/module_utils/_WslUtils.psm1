@@ -128,14 +128,20 @@ function Invoke-WslCommand {
     $psi.Arguments = $arguments -join ' '
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
-    $psi.StandardOutputEncoding = [System.Text.Encoding]::Unicode
-    $psi.StandardErrorEncoding = [System.Text.Encoding]::Unicode
+    # WSL uses utf16 by default but is "investigating" making utf8 the default in the
+    # future
+    $psi.EnvironmentVariables["WSL_UTF8"] = "1"
+    $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+    $psi.StandardErrorEncoding = [System.Text.Encoding]::UTF8
     $psi.UseShellExecute = $false
     $psi.CreateNoWindow = $true
 
     $process = [System.Diagnostics.Process]::Start($psi)
+    # one read needs to be async,
+    # https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.standardoutput
+    $stderrTask = $process.StandardError.ReadToEndAsync()
     $stdout = $process.StandardOutput.ReadToEnd()
-    $stderr = $process.StandardError.ReadToEnd()
+    $stderr = $stderrTask.GetAwaiter().GetResult()
     $process.WaitForExit()
 
     if (($module.Params.log_command_output -eq $True) -or ($process.ExitCode -notin $successCodes)) {

@@ -28,6 +28,12 @@ attributes:
 requirements:
   - WSL installed and operational on the target host
 
+notes:
+  - Modules that parse the output of the WSL executable depend on an English output. If the language output
+    by the executable is non-English, it is possible the module will not work as intended. If Microsoft introduces
+    a way to set the output for the executable without affecting the rest of the operating system, this
+    restriction may be removed.
+
 seealso:
   - name: Microsoft WSL Documentation
     description: Official documentation for Windows Subsystem for Linux.

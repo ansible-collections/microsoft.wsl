@@ -25,6 +25,10 @@ DOCUMENTATION:
   author:
     - Mike Morency (@mikemorency)
 
+  attributes:
+    diff_mode:
+      support: N/A
+
 EXAMPLES: |
   - name: Get the status of a WSL install
     microsoft.wsl.status_info:

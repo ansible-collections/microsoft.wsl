@@ -46,7 +46,7 @@ function Get-LocalDistroInfo {
     $lines = Split-StdText $stdout
     $distributions = @{}
     foreach ($line in ($lines | Select-Object -Skip 1)) {
-        if ($line -match '^\s*(\*)?\s*(.+?)\s+(Running|Stopped|Converting|Installing)\s+(\d+)\s*$') {
+        if ($line -match '^\s*(\*)?\s*(.+?)\s+(Stopped|Running|Installing|Uninstalling|Converting|Exporting)\s+(\d+)\s*$') {
             $distributions[$Matches[2].Trim()] = @{
                 name = $Matches[2].Trim()
                 state = $Matches[3]
