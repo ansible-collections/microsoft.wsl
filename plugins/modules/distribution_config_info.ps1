@@ -32,7 +32,10 @@ if (-not [string]::IsNullOrEmpty($name) -and -not $distributions.Contains($name)
 $configs = @{}
 foreach ($distroName in $distributions.Keys) {
     # Ensure the distribution is running so the UNC filesystem path is accessible
-    Invoke-WslCommand -wslExe $wslExe -module $module -arguments @("-d", $distroName, "--", "true")
+    Invoke-WslCommand `
+        -wslExe $wslExe `
+        -module $module `
+        -arguments @("-d", $distroName, "--", "true") | Out-Null
     $confPath = Get-WslConfPath -name $distroName
     $parsedConfig = ConvertTo-SnakeCaseConfig -config (Read-WslConf -path $confPath)
     $configs[$distroName] = @{

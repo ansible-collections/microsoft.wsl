@@ -159,37 +159,49 @@ if ($null -eq $currentDistro) {
 $sectionNames = @("automount", "network", "interop", "user", "boot", "gpu", "time")
 
 # Ensure the distribution is running so the UNC filesystem path is accessible
-Invoke-WslCommand -wslExe $wslExe -module $module -arguments @("-d", $name, "--", "true")
+Invoke-WslCommand `
+    -wslExe $wslExe `
+    -module $module `
+    -arguments @("-d", $name, "--", "true") | Out-Null
 
 $confPath = Get-WslConfPath -name $name
 $config = Read-WslConf -path $confPath
 
 $beforeText = ConvertTo-WslConfText -config $config
 
-$changed = $false
-
 foreach ($sectionName in $sectionNames) {
+    $changed = $false
     $sectionParams = $module.Params.$sectionName
     if ($null -eq $sectionParams) {
         continue
     }
 
     if ($state -eq "present") {
-        $changed = Set-WslConfSection -Config $config -SectionName $sectionName -SectionParams $sectionParams
+        $changed = Set-WslConfSection `
+            -Config $config `
+            -SectionName $sectionName `
+            -SectionParams $sectionParams
     }
     elseif ($state -eq "absent") {
-        $changed = Remove-WslConfSection -Config $config -SectionName $sectionName -SectionParams $sectionParams
+        $changed = Remove-WslConfSection `
+            -Config $config `
+            -SectionName $sectionName `
+            -SectionParams $sectionParams
+    }
+
+    if ($changed) {
+        $module.Result.changed = $true
     }
 }
 
 $afterText = ConvertTo-WslConfText -config $config
 
-$module.Result.changed = $changed
 $module.Diff.before = $beforeText
 $module.Diff.after = $afterText
 
-if ($changed -and (-not $module.CheckMode)) {
-    Write-WslConf -path $confPath -config $config
+if ($module.Result.changed -and (-not $module.CheckMode)) {
+    $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText($confPath, $afterText + "`n", $utf8NoBom)
 }
 
 $module.ExitJson()

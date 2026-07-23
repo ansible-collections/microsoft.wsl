@@ -165,52 +165,6 @@ function Read-WslConf {
 }
 
 
-function Write-WslConf {
-    <#
-    .SYNOPSIS
-        Writes an OrderedDictionary of sections to an INI-format file.
-    .DESCRIPTION
-        Serializes the config data to INI format and writes it to the given path.
-        Sections are separated by blank lines. Key-value pairs use key=value format.
-    .PARAMETER path
-        The filesystem path to write the wsl.conf file.
-    .PARAMETER config
-        An OrderedDictionary of sections, each containing an OrderedDictionary
-        of key-value pairs.
-    #>
-    param (
-        [Parameter(Mandatory)]
-        [string]$path,
-
-        [Parameter(Mandatory)]
-        [System.Collections.Specialized.OrderedDictionary]$config
-    )
-
-    $lines = [System.Collections.Generic.List[string]]::new()
-    $firstSection = $true
-
-    foreach ($section in $config.GetEnumerator()) {
-        if ($section.Value.Count -eq 0) {
-            continue
-        }
-
-        if (-not $firstSection) {
-            $lines.Add("")
-        }
-        $firstSection = $false
-
-        $lines.Add("[$($section.Key)]")
-        foreach ($entry in $section.Value.GetEnumerator()) {
-            $lines.Add("$($entry.Key)=$($entry.Value)")
-        }
-    }
-
-    $text = ($lines -join "`n") + "`n"
-    $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-    [System.IO.File]::WriteAllText($path, $text, $utf8NoBom)
-}
-
-
 function ConvertTo-WslConfText {
     <#
     .SYNOPSIS
