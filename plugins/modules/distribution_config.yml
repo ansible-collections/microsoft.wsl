@@ -38,6 +38,14 @@ DOCUMENTATION:
         - present
         - absent
       default: present
+    terminate:
+      description:
+        - Whether to terminate the distribution after the configuration is updated.
+        - WSL configuration changes in C(wsl.conf) only take effect after the
+          distribution is restarted.
+        - The distribution is only terminated when configuration changes are made.
+      type: bool
+      default: false
     automount:
       description:
         - Configuration options for the C([automount]) section of C(wsl.conf).
@@ -176,6 +184,13 @@ EXAMPLES: |
       name: Ubuntu
       user:
         default: myuser
+
+  - name: Enable systemd and terminate the distribution to apply changes
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      terminate: true
+      boot:
+        systemd: true
 
   - name: Configure multiple sections at once
     microsoft.wsl.distribution_config:

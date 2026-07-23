@@ -13,6 +13,7 @@ $commonOptions = Get-WslCommandCommonOptionsDict
 $moduleOptions = @{
     name = @{ type = "str"; required = $true }
     state = @{ type = "str"; default = "present"; choices = @("present", "absent") }
+    terminate = @{ type = "bool"; default = $false }
     automount = @{
         type = "dict"
         options = @{
@@ -69,6 +70,7 @@ $spec = @{
     supports_check_mode = $true
 }
 
+
 Function Set-WslConfSection {
     param(
         [System.Collections.Specialized.OrderedDictionary]$Config,
@@ -89,15 +91,17 @@ Function Set-WslConfSection {
 
         $confKey = Resolve-ConfKey -paramKey $param.Key
         $confValue = ConvertTo-ConfValue -value $param.Value
+        $confSection = $Config[$SectionName]
 
-        if (-not $Config[$SectionName].Contains($confKey) -or $Config[$SectionName][$confKey] -ne $confValue) {
-            $Config[$SectionName][$confKey] = $confValue
+        if (-not $confSection.Contains($confKey) -or $confSection[$confKey] -ne $confValue) {
+            $confSection[$confKey] = $confValue
             $changed = $true
         }
     }
 
     return $changed
 }
+
 
 Function Remove-WslConfSection {
     param(
@@ -106,30 +110,25 @@ Function Remove-WslConfSection {
         [System.Collections.IDictionary]$SectionParams
     )
 
-    $changed = $false
-
     if (-not $Config.Contains($SectionName)) {
-        return $changed
+        return $false
     }
 
-    $hasExplicitValues = $false
-    foreach ($param in $SectionParams.GetEnumerator()) {
-        if ($null -ne $param.Value) {
-            $hasExplicitValues = $true
-            break
+    $nonNullParams = @{}
+    foreach ($key in $SectionParams.Keys) {
+        if ($null -eq $SectionParams[$key]) {
+            continue
         }
+        $nonNullParams[$key] = $SectionParams[$key]
     }
 
-    if (-not $hasExplicitValues) {
+    if ($nonNullParams.Count -eq 0) {
         $Config.Remove($SectionName)
         return $true
     }
 
-    foreach ($param in $SectionParams.GetEnumerator()) {
-        if ($null -eq $param.Value) {
-            continue
-        }
-
+    $changed = $false
+    foreach ($param in $nonNullParams.GetEnumerator()) {
         $confKey = Resolve-ConfKey -paramKey $param.Key
 
         if ($Config[$SectionName].Contains($confKey)) {
@@ -140,14 +139,18 @@ Function Remove-WslConfSection {
 
     if ($Config[$SectionName].Count -eq 0) {
         $Config.Remove($SectionName)
+        $changed = $true
     }
 
     return $changed
 }
 
+
+
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 $name = $module.Params.name
 $state = $module.Params.state
+$terminate = $module.Params.terminate
 
 $wslExe = Test-WslInstall -module $module
 
@@ -167,7 +170,7 @@ Invoke-WslCommand `
 $confPath = Get-WslConfPath -name $name
 $config = Read-WslConf -path $confPath
 
-$beforeText = ConvertTo-WslConfText -config $config
+$beforeSnake = ConvertTo-SnakeCaseConfig -config $config
 
 foreach ($sectionName in $sectionNames) {
     $changed = $false
@@ -194,14 +197,22 @@ foreach ($sectionName in $sectionNames) {
     }
 }
 
-$afterText = ConvertTo-WslConfText -config $config
+if ($module.Result.changed) {
+    $module.Diff.before = $beforeSnake
+    $module.Diff.after = ConvertTo-SnakeCaseConfig -config $config
+    $afterText = ConvertTo-WslConfText -config $config
 
-$module.Diff.before = $beforeText
-$module.Diff.after = $afterText
+    if (-not $module.CheckMode) {
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::WriteAllText($confPath, $afterText + "`n", $utf8NoBom)
 
-if ($module.Result.changed -and (-not $module.CheckMode)) {
-    $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-    [System.IO.File]::WriteAllText($confPath, $afterText + "`n", $utf8NoBom)
+        if ($terminate) {
+            Invoke-WslCommand `
+                -wslExe $wslExe `
+                -module $module `
+                -arguments @("--terminate", $name) | Out-Null
+        }
+    }
 }
 
 $module.ExitJson()
