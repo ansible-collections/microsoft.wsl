@@ -1,0 +1,38 @@
+---
+- name: Get config for all distributions
+  microsoft.wsl.distribution_config_info:
+  register: _all
+
+- name: Get config for a specific distribution
+  microsoft.wsl.distribution_config_info:
+    name: "{{ test_distribution_name }}"
+  register: _single
+
+- name: Assert all configs returned
+  ansible.builtin.assert:
+    that:
+      - _all.configs is defined
+      - _all.configs | length >= 1
+      - _all.configs[test_distribution_name] is defined
+      - _all.configs[test_distribution_name].name == test_distribution_name
+      - _all.configs[test_distribution_name].config is defined
+
+- name: Assert single config returned
+  ansible.builtin.assert:
+    that:
+      - _single.configs | length == 1
+      - _single.configs[test_distribution_name] is defined
+      - _single.configs[test_distribution_name].name == test_distribution_name
+      - _single.configs[test_distribution_name].config is defined
+
+- name: Get config for a non-existent distribution
+  microsoft.wsl.distribution_config_info:
+    name: DoesNotExist
+  register: _missing
+  ignore_errors: true
+
+- name: Assert non-existent distribution fails
+  ansible.builtin.assert:
+    that:
+      - _missing is failed
+      - "'DoesNotExist' in _missing.msg"

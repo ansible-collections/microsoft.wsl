@@ -1,0 +1,82 @@
+---
+# Copyright: (c) 2026, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+DOCUMENTATION:
+  module: distribution_config_info
+  short_description: Get the wsl.conf configuration for WSL distributions
+  description:
+    - Returns the parsed contents of the C(/etc/wsl.conf) configuration file
+      for one or all Windows Subsystem for Linux (WSL) distributions.
+    - The file is read directly via the Windows filesystem path rather than
+      piping commands through C(wsl.exe).
+    - See U(https://learn.microsoft.com/en-us/windows/wsl/wsl-config) for details
+      on the available configuration options.
+
+  seealso:
+    - module: microsoft.wsl.distribution_config
+    - module: microsoft.wsl.distribution
+    - module: microsoft.wsl.distribution_info
+
+  extends_documentation_fragment:
+    - ansible.builtin.action_common_attributes
+    - microsoft.wsl.wsl_command
+
+  options:
+    name:
+      description:
+        - The name of a specific WSL distribution whose C(wsl.conf) file should be read.
+        - If not specified, the configuration for all installed distributions is returned.
+      type: str
+
+  author:
+    - Mike Morency (@mikemorency)
+
+  attributes:
+    diff_mode:
+      support: N/A
+
+EXAMPLES: |
+  - name: Get the wsl.conf for all distributions
+    microsoft.wsl.distribution_config_info:
+    register: all_configs
+
+  - name: Get the wsl.conf for a specific distribution
+    microsoft.wsl.distribution_config_info:
+      name: Ubuntu
+    register: wsl_config
+
+  - name: Display the configuration
+    ansible.builtin.debug:
+      var: wsl_config.configs
+
+  - name: Check if systemd is enabled for Ubuntu
+    ansible.builtin.debug:
+      msg: "systemd is enabled"
+    when: wsl_config.configs.Ubuntu.config.boot.systemd | default('false') | bool
+
+RETURN:
+  configs:
+    description:
+      - A dictionary of distribution configurations keyed by distribution name.
+      - Each entry contains the distribution name and the parsed contents of
+        its C(wsl.conf) file.
+      - Config values use snake_case key names matching the
+        M(microsoft.wsl.distribution_config) module parameters.
+      - All config values are returned as strings, matching the raw file contents.
+      - A distribution whose C(wsl.conf) file does not exist will have an empty
+        config dictionary.
+    returned: always
+    type: dict
+    sample:
+      Ubuntu:
+        name: Ubuntu
+        config:
+          automount:
+            enabled: "true"
+            root: /mnt/
+          boot:
+            systemd: "true"
+          network:
+            generate_hosts: "true"
+            generate_resolv_conf: "true"

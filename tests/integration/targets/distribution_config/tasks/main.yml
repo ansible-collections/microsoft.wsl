@@ -1,0 +1,316 @@
+---
+- name: Test distribution config lifecycle
+  block:
+    - name: Install a test distribution
+      microsoft.wsl.distribution:
+        name: "{{ test_distribution_name }}"
+        distribution_id: Ubuntu
+        state: present
+        use_ms_store: false
+
+    - name: Do info module tests
+      ansible.builtin.include_tasks: info.yml
+
+    - name: Set boot and network options - check mode
+      microsoft.wsl.distribution_config: &set_options
+        name: "{{ test_distribution_name }}"
+        state: present
+        boot:
+          systemd: true
+          command: service docker start
+        network:
+          generate_hosts: false
+          hostname: test-host
+      check_mode: true
+      register: _set_check
+
+    - name: Set boot and network options
+      microsoft.wsl.distribution_config: *set_options
+      register: _set
+
+    - name: Set boot and network options - idempotence
+      microsoft.wsl.distribution_config: *set_options
+      register: _set_idem
+
+    - name: Assert set options changed
+      ansible.builtin.assert:
+        that:
+          - _set_check is changed
+          - _set is changed
+          - _set_idem is not changed
+
+    - name: Verify config after setting options
+      microsoft.wsl.distribution_config_info:
+        name: "{{ test_distribution_name }}"
+      register: _info_after_set
+
+    - name: Assert options were set correctly
+      ansible.builtin.assert:
+        that:
+          - _info_after_set.configs[test_distribution_name].config.boot.systemd == 'true'
+          - _info_after_set.configs[test_distribution_name].config.boot.command == 'service docker start'
+          - _info_after_set.configs[test_distribution_name].config.network.generate_hosts == 'false'
+          - _info_after_set.configs[test_distribution_name].config.network.hostname == 'test-host'
+
+    - name: Update existing options - check mode
+      microsoft.wsl.distribution_config: &update_options
+        name: "{{ test_distribution_name }}"
+        state: present
+        network:
+          hostname: updated-host
+      check_mode: true
+      register: _update_check
+
+    - name: Update existing options
+      microsoft.wsl.distribution_config: *update_options
+      register: _update
+
+    - name: Update existing options - idempotence
+      microsoft.wsl.distribution_config: *update_options
+      register: _update_idem
+
+    - name: Assert update changed
+      ansible.builtin.assert:
+        that:
+          - _update_check is changed
+          - _update is changed
+          - _update_idem is not changed
+
+    - name: Verify config after update
+      microsoft.wsl.distribution_config_info:
+        name: "{{ test_distribution_name }}"
+      register: _info_after_update
+
+    - name: Assert option was updated and other options preserved
+      ansible.builtin.assert:
+        that:
+          - _info_after_update.configs[test_distribution_name].config.network.hostname == 'updated-host'
+          - _info_after_update.configs[test_distribution_name].config.network.generate_hosts == 'false'
+          - _info_after_update.configs[test_distribution_name].config.boot.systemd == 'true'
+          - _info_after_update.configs[test_distribution_name].config.boot.command == 'service docker start'
+
+    - name: Set options across multiple sections - check mode
+      microsoft.wsl.distribution_config: &multi_section
+        name: "{{ test_distribution_name }}"
+        state: present
+        automount:
+          enabled: true
+          root: /
+        interop:
+          enabled: false
+          append_windows_path: false
+        user:
+          default: testuser
+      check_mode: true
+      register: _multi_check
+
+    - name: Set options across multiple sections
+      microsoft.wsl.distribution_config: *multi_section
+      register: _multi
+
+    - name: Set options across multiple sections - idempotence
+      microsoft.wsl.distribution_config: *multi_section
+      register: _multi_idem
+
+    - name: Assert multi-section set changed
+      ansible.builtin.assert:
+        that:
+          - _multi_check is changed
+          - _multi is changed
+          - _multi_idem is not changed
+
+    - name: Verify config after multi-section set
+      microsoft.wsl.distribution_config_info:
+        name: "{{ test_distribution_name }}"
+      register: _info_after_multi
+
+    - name: Assert multi-section options were set correctly
+      ansible.builtin.assert:
+        that:
+          - _info_after_multi.configs[test_distribution_name].config.automount.enabled == 'true'
+          - _info_after_multi.configs[test_distribution_name].config.automount.root == '/'
+          - _info_after_multi.configs[test_distribution_name].config.interop.enabled == 'false'
+          - _info_after_multi.configs[test_distribution_name].config.interop.append_windows_path == 'false'
+          - _info_after_multi.configs[test_distribution_name].config.user.default == 'testuser'
+          - _info_after_multi.configs[test_distribution_name].config.boot.systemd == 'true'
+
+    - name: Remove specific options - check mode
+      microsoft.wsl.distribution_config: &remove_options
+        name: "{{ test_distribution_name }}"
+        state: absent
+        network:
+          hostname: ''
+        boot:
+          command: ''
+      check_mode: true
+      register: _remove_check
+
+    - name: Remove specific options
+      microsoft.wsl.distribution_config: *remove_options
+      register: _remove
+
+    - name: Remove specific options - idempotence
+      microsoft.wsl.distribution_config: *remove_options
+      register: _remove_idem
+
+    - name: Assert remove changed
+      ansible.builtin.assert:
+        that:
+          - _remove_check is changed
+          - _remove is changed
+          - _remove_idem is not changed
+
+    - name: Verify config after removing options
+      microsoft.wsl.distribution_config_info:
+        name: "{{ test_distribution_name }}"
+      register: _info_after_remove
+
+    - name: Assert options were removed and others preserved
+      ansible.builtin.assert:
+        that:
+          - _info_after_remove.configs[test_distribution_name].config.network.hostname is not defined
+          - _info_after_remove.configs[test_distribution_name].config.boot.command is not defined
+          - _info_after_remove.configs[test_distribution_name].config.network.generate_hosts == 'false'
+          - _info_after_remove.configs[test_distribution_name].config.boot.systemd == 'true'
+
+    - name: Remove an entire section - check mode
+      microsoft.wsl.distribution_config: &remove_section
+        name: "{{ test_distribution_name }}"
+        state: absent
+        interop:
+          enabled: false
+          append_windows_path: false
+      check_mode: true
+      register: _remove_section_check
+
+    - name: Remove an entire section
+      microsoft.wsl.distribution_config: *remove_section
+      register: _remove_section
+
+    - name: Remove an entire section - idempotence
+      microsoft.wsl.distribution_config: *remove_section
+      register: _remove_section_idem
+
+    - name: Assert section removal changed
+      ansible.builtin.assert:
+        that:
+          - _remove_section_check is changed
+          - _remove_section is changed
+          - _remove_section_idem is not changed
+
+    - name: Verify config after section removal
+      microsoft.wsl.distribution_config_info:
+        name: "{{ test_distribution_name }}"
+      register: _info_after_section_remove
+
+    - name: Assert section was fully removed
+      ansible.builtin.assert:
+        that:
+          - _info_after_section_remove.configs[test_distribution_name].config.interop is not defined
+
+    - name: Re-add interop section for empty dict removal test
+      microsoft.wsl.distribution_config:
+        name: "{{ test_distribution_name }}"
+        state: present
+        interop:
+          enabled: true
+          append_windows_path: true
+
+    - name: Remove section with empty dict - check mode
+      microsoft.wsl.distribution_config: &remove_section_empty
+        name: "{{ test_distribution_name }}"
+        state: absent
+        interop: {}
+      check_mode: true
+      register: _remove_empty_check
+
+    - name: Remove section with empty dict
+      microsoft.wsl.distribution_config: *remove_section_empty
+      register: _remove_empty
+
+    - name: Remove section with empty dict - idempotence
+      microsoft.wsl.distribution_config: *remove_section_empty
+      register: _remove_empty_idem
+
+    - name: Assert empty dict section removal changed
+      ansible.builtin.assert:
+        that:
+          - _remove_empty_check is changed
+          - _remove_empty is changed
+          - _remove_empty_idem is not changed
+
+    - name: Verify config after empty dict section removal
+      microsoft.wsl.distribution_config_info:
+        name: "{{ test_distribution_name }}"
+      register: _info_after_empty_remove
+
+    - name: Assert section was fully removed via empty dict
+      ansible.builtin.assert:
+        that:
+          - _info_after_empty_remove.configs[test_distribution_name].config.interop is not defined
+
+    - name: Set options on a distro with no wsl.conf - check mode
+      microsoft.wsl.distribution_config: &set_no_conf
+        name: "{{ test_distribution_name }}"
+        state: present
+        gpu:
+          enabled: true
+        time:
+          use_windows_timezone: false
+      check_mode: true
+      register: _new_section_check
+
+    - name: Set options on a distro with new sections
+      microsoft.wsl.distribution_config: *set_no_conf
+      register: _new_section
+
+    - name: Set options on a distro with new sections - idempotence
+      microsoft.wsl.distribution_config: *set_no_conf
+      register: _new_section_idem
+
+    - name: Assert new section set changed
+      ansible.builtin.assert:
+        that:
+          - _new_section_check is changed
+          - _new_section is changed
+          - _new_section_idem is not changed
+
+    - name: Verify config after new section set
+      microsoft.wsl.distribution_config_info:
+        name: "{{ test_distribution_name }}"
+      register: _info_after_new_section
+
+    - name: Assert new sections were created
+      ansible.builtin.assert:
+        that:
+          - _info_after_new_section.configs[test_distribution_name].config.gpu.enabled == 'true'
+          - _info_after_new_section.configs[test_distribution_name].config.time.use_windows_timezone == 'false'
+
+    - name: Remove options from a non-existent section
+      microsoft.wsl.distribution_config:
+        name: "{{ test_distribution_name }}"
+        state: absent
+        gpu:
+          enabled: false
+        time:
+          use_windows_timezone: false
+      register: _remove_new_sections
+
+    - name: Remove options that do not exist
+      microsoft.wsl.distribution_config:
+        name: "{{ test_distribution_name }}"
+        state: absent
+        gpu:
+          enabled: false
+      register: _remove_missing
+
+    - name: Assert removing non-existent options is not changed
+      ansible.builtin.assert:
+        that:
+          - _remove_missing is not changed
+
+  always:
+    - name: Cleanup - ensure test distro is removed
+      microsoft.wsl.distribution:
+        name: "{{ test_distribution_name }}"
+        state: absent

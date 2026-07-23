@@ -1,0 +1,206 @@
+---
+# Copyright: (c) 2026, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+DOCUMENTATION:
+  module: distribution_config
+  short_description: Manage a WSL distribution's configuration
+  description:
+    - Manage the C(/etc/wsl.conf) configuration file for a Windows Subsystem for Linux (WSL) distribution.
+    - Add, update, or remove configuration options that control automount, networking,
+      interop, user, boot, GPU, and time settings.
+    - See U(https://learn.microsoft.com/en-us/windows/wsl/wsl-config) for details
+      on the available configuration options.
+
+  seealso:
+    - module: microsoft.wsl.distribution_config_info
+
+  extends_documentation_fragment:
+    - ansible.builtin.action_common_attributes
+    - microsoft.wsl.wsl_command
+
+  options:
+    name:
+      description:
+        - The name of the WSL distribution whose configuration should be managed.
+      type: str
+      required: true
+    state:
+      description:
+        - Whether the specified configuration options should be present or absent.
+        - If V(present), the specified options will be added or updated in the
+          C(wsl.conf) file.
+        - If V(absent), the specified option keys will be removed from the
+          C(wsl.conf) file.
+        - The values provided in each option are ignored when state is V(absent).
+      type: str
+      choices:
+        - present
+        - absent
+      default: present
+    automount:
+      description:
+        - Configuration options for the C([automount]) section of C(wsl.conf).
+        - Controls how Windows drives are automatically mounted in the distribution.
+      type: dict
+      suboptions:
+        enabled:
+          description:
+            - Whether fixed drives (like C(C:/) or C(D:/)) are automatically mounted
+              with DrvFs under the root directory.
+          type: bool
+        mount_fs_tab:
+          description:
+            - Whether C(/etc/fstab) is processed on WSL start.
+          type: bool
+        root:
+          description:
+            - The directory where fixed drives will be automatically mounted.
+          type: str
+        options:
+          description:
+            - A comma-separated list of DrvFs mount options.
+            - Only DrvFs-specific options can be specified.
+            - "Common options include: C(metadata), C(uid), C(gid), C(umask), C(fmask),
+              C(dmask), and C(case)."
+          type: str
+    network:
+      description:
+        - Configuration options for the C([network]) section of C(wsl.conf).
+        - Controls network-related settings for the distribution.
+      type: dict
+      suboptions:
+        generate_hosts:
+          description:
+            - Whether WSL generates C(/etc/hosts) with a static map of hostnames
+              to IP addresses.
+          type: bool
+        generate_resolv_conf:
+          description:
+            - Whether WSL generates C(/etc/resolv.conf) with DNS server information.
+          type: bool
+        hostname:
+          description:
+            - The hostname to use for the WSL distribution.
+          type: str
+    interop:
+      description:
+        - Configuration options for the C([interop]) section of C(wsl.conf).
+        - Controls interoperability between WSL and the Windows host.
+      type: dict
+      suboptions:
+        enabled:
+          description:
+            - Whether WSL supports launching Windows processes from within Linux.
+          type: bool
+        append_windows_path:
+          description:
+            - Whether WSL adds Windows path elements to the C($PATH) environment variable.
+          type: bool
+    user:
+      description:
+        - Configuration options for the C([user]) section of C(wsl.conf).
+      type: dict
+      suboptions:
+        default:
+          description:
+            - The default user to run as when starting a WSL session.
+          type: str
+    boot:
+      description:
+        - Configuration options for the C([boot]) section of C(wsl.conf).
+        - The boot section is only available on Windows 11 and Server 2022.
+      type: dict
+      suboptions:
+        command:
+          description:
+            - A command to run when the WSL instance starts.
+            - This command is run as the root user.
+          type: str
+        systemd:
+          description:
+            - Whether to enable systemd as the init system.
+          type: bool
+        protect_binfmt:
+          description:
+            - Whether to prevent WSL from generating systemd units when systemd is enabled.
+          type: bool
+    gpu:
+      description:
+        - Configuration options for the C([gpu]) section of C(wsl.conf).
+      type: dict
+      suboptions:
+        enabled:
+          description:
+            - Whether Linux applications can access the Windows GPU via
+              para-virtualization.
+          type: bool
+    time:
+      description:
+        - Configuration options for the C([time]) section of C(wsl.conf).
+      type: dict
+      suboptions:
+        use_windows_timezone:
+          description:
+            - Whether WSL uses and syncs to the timezone set in Windows.
+          type: bool
+
+  author:
+    - Mike Morency (@mikemorency)
+
+EXAMPLES: |
+  - name: Enable systemd and set a boot command
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      boot:
+        systemd: true
+        command: service docker start
+
+  - name: Configure automount settings
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      automount:
+        enabled: true
+        root: /
+        options: "metadata,uid=1003,gid=1003,umask=077,fmask=11,case=off"
+
+  - name: Disable Windows interop
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      interop:
+        enabled: false
+        append_windows_path: false
+
+  - name: Set the default user
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      user:
+        default: myuser
+
+  - name: Configure multiple sections at once
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      boot:
+        systemd: true
+      network:
+        generate_hosts: false
+        hostname: my-wsl-host
+      interop:
+        append_windows_path: false
+
+  - name: Remove specific options from wsl.conf
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      state: absent
+      network:
+        hostname: ''
+      boot:
+        command: ''
+
+  - name: Remove an entire section from wsl.conf
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      state: absent
+      interop: {}
+
+RETURN: {}
