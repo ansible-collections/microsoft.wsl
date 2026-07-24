@@ -28,13 +28,13 @@ $wslExe = Test-WslInstall -module $module
 $module.Diff.before = @{}
 $module.Diff.after = @{}
 
-if (Test-Path -LiteralPath $dest) {
-    $module.ExitJson()
-}
-
 $currentDistro = Get-DistributionRuntimeInfo -wslExe $wslExe -module $module -name $name -flat
 if ($null -eq $currentDistro) {
     $module.FailJson("The distribution '$name' was not found. Cannot export a distribution that does not exist.")
+}
+
+if (Test-Path -LiteralPath $dest) {
+    $module.ExitJson()
 }
 
 $module.Result.changed = $true

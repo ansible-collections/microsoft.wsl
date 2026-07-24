@@ -59,7 +59,15 @@ Invoke-WslCommand `
     -arguments $importParams | Out-Null
 
 if ($module.Params.remove_src) {
-    Remove-Item -LiteralPath $src -Force
+    try {
+        Remove-Item -LiteralPath $src -Force
+    }
+    catch {
+        $module.FailJson(
+            "The distribution was successfully imported, but the source file could not be removed: $($_.Exception.Message)",
+            $_
+        )
+    }
 }
 
 $module.ExitJson()
