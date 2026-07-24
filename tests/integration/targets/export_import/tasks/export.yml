@@ -1,0 +1,54 @@
+---
+- name: Export the distro - check mode
+  microsoft.wsl.export: &export
+    name: "{{ test_distribution_name }}"
+    dest: "{{ test_export_path }}"
+  check_mode: true
+  register: _export_check
+
+- name: Assert export file does not exist after check mode
+  ansible.windows.win_stat:
+    path: "{{ test_export_path }}"
+  register: _export_file_check
+- name: Verify check mode did not create the file
+  ansible.builtin.assert:
+    that:
+      - _export_check is changed
+      - not _export_file_check.stat.exists
+
+- name: Export the distro
+  microsoft.wsl.export: *export
+  register: _export
+
+- name: Assert export file exists
+  ansible.windows.win_stat:
+    path: "{{ test_export_path }}"
+  register: _export_file
+- name: Verify export created the file
+  ansible.builtin.assert:
+    that:
+      - _export is changed
+      - _export_file.stat.exists
+      - _export_file.stat.size > 0
+
+- name: Export the distro - idempotence
+  microsoft.wsl.export: *export
+  register: _export_idem
+
+- name: Assert export idempotence
+  ansible.builtin.assert:
+    that:
+      - _export_idem is not changed
+
+- name: Export a non-existent distro
+  microsoft.wsl.export:
+    name: DoesNotExist
+    dest: "{{ test_export_dir }}\\nonexistent.tar"
+  register: _export_missing
+  ignore_errors: true
+
+- name: Assert export of non-existent distro fails
+  ansible.builtin.assert:
+    that:
+      - _export_missing is failed
+      - "'was not found' in _export_missing.msg"

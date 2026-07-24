@@ -1,0 +1,58 @@
+---
+- name: Import the distro - check mode
+  microsoft.wsl.import: &import
+    name: "{{ test_import_name }}"
+    src: "{{ test_export_path }}"
+    location: "{{ test_import_location }}"
+  check_mode: true
+  register: _import_check
+
+- name: Verify check mode did not create the distro
+  microsoft.wsl.distribution_info:
+    name: "{{ test_import_name }}"
+  register: _import_info_check
+- name: Assert check mode results
+  ansible.builtin.assert:
+    that:
+      - _import_check is changed
+      - _import_info_check.distributions | length == 0
+
+- name: Import the distro
+  microsoft.wsl.import: *import
+  register: _import
+
+- name: Verify import created the distro
+  microsoft.wsl.distribution_info:
+    name: "{{ test_import_name }}"
+  register: _import_info
+- name: Assert import results
+  ansible.builtin.assert:
+    that:
+      - _import is changed
+      - _import_info.distributions | length == 1
+      - _import_info.distributions[test_import_name] is defined
+      - _import_info.distributions[test_import_name].name == test_import_name
+      - _import_info.distributions[test_import_name].state in ['Running', 'Stopped']
+
+- name: Import the distro - idempotence
+  microsoft.wsl.import: *import
+  register: _import_idem
+
+- name: Assert import idempotence
+  ansible.builtin.assert:
+    that:
+      - _import_idem is not changed
+
+- name: Import with a missing source file
+  microsoft.wsl.import:
+    name: "{{ unique_test_id }}-missing"
+    src: "c:\\temp\\does_not_exist.tar"
+    location: "c:\\temp\\wsl-missing-test"
+  register: _import_missing
+  ignore_errors: true
+
+- name: Assert import of missing source fails
+  ansible.builtin.assert:
+    that:
+      - _import_missing is failed
+      - "'was not found' in _import_missing.msg"
