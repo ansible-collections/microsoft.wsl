@@ -1,2 +1,2 @@
 ---
-test_distribution_name: "{{ unique_test_id }}-distro"
+test_distribution_name: "{{ unique_test_id }}-distro-config"

@@ -1,0 +1,13 @@
+---
+# Importing an exported distro is way faster than downloading and installing it
+# for each test
+- name: Export the base ubuntu distro
+  microsoft.wsl.export:
+    name: Ubuntu
+    dest: C:\wsl-setup\test-distro.tar
+
+- name: Import the base ubuntu distro as a test distro
+  microsoft.wsl.import:
+    name: "{{ setup_test_distro_name }}"
+    src: C:\wsl-setup\test-distro.tar
+    location: c:\wsl-setup

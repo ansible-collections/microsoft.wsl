@@ -14,6 +14,11 @@ $moduleOptions = @{
     name = @{ type = "str"; required = $true }
     state = @{ type = "str"; default = "present"; choices = @("present", "absent") }
     terminate = @{ type = "bool"; default = $false }
+    header = @{
+        type = "str"
+        default = "This file is managed by Ansible (microsoft.wsl.distribution_config). Manual changes and comments may be overwritten."
+    }
+    enforce_header = @{ type = "bool"; default = $false }
     automount = @{
         type = "dict"
         options = @{
@@ -93,7 +98,7 @@ Function Set-WslConfSection {
         $confValue = ConvertTo-ConfValue -value $param.Value
         $confSection = $Config[$SectionName]
 
-        if (-not $confSection.Contains($confKey) -or $confSection[$confKey] -ne $confValue) {
+        if (-not $confSection.Contains($confKey) -or $confSection[$confKey] -cne $confValue) {
             $confSection[$confKey] = $confValue
             $changed = $true
         }
@@ -146,11 +151,66 @@ Function Remove-WslConfSection {
 }
 
 
+function Compare-ConfigChange {
+    param (
+        $module,
+        $sectionNames,
+        $config,
+        $state
+    )
+    foreach ($sectionName in $sectionNames) {
+        $changed = $false
+        $sectionParams = $module.Params.$sectionName
+        if ($null -eq $sectionParams) {
+            continue
+        }
+
+        if ($state -eq "present") {
+            $changed = Set-WslConfSection `
+                -Config $config `
+                -SectionName $sectionName `
+                -SectionParams $sectionParams
+        }
+        elseif ($state -eq "absent") {
+            $changed = Remove-WslConfSection `
+                -Config $config `
+                -SectionName $sectionName `
+                -SectionParams $sectionParams
+        }
+
+        if ($changed) {
+            $module.Result.changed = $true
+        }
+    }
+}
+
+
+function Compare-HeaderChange {
+    param (
+        $module,
+        $confPath,
+        $desiredHeader,
+        $currentHeader
+    )
+    $headerChanged = $false
+    if ($currentHeader -cne $desiredHeader) {
+        $headerChanged = $true
+    }
+
+    if ($enforceHeader -and $headerChanged) {
+        $module.Result.changed = $true
+    }
+
+    return $headerChanged
+}
+
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 $name = $module.Params.name
 $state = $module.Params.state
 $terminate = $module.Params.terminate
+$header = $module.Params.header
+$enforceHeader = $module.Params.enforce_header
 
 $wslExe = Test-WslInstall -module $module
 
@@ -169,38 +229,30 @@ Invoke-WslCommand `
 
 $confPath = Get-WslConfPath -name $name
 $config = Read-WslConf -path $confPath
+$currentHeader = Read-WslConfHeader -path $confPath
 
 $beforeSnake = ConvertTo-SnakeCaseConfig -config $config
 
-foreach ($sectionName in $sectionNames) {
-    $changed = $false
-    $sectionParams = $module.Params.$sectionName
-    if ($null -eq $sectionParams) {
-        continue
-    }
+Compare-ConfigChange `
+    -module $module `
+    -sectionNames $sectionNames `
+    -config $config `
+    -state $state
 
-    if ($state -eq "present") {
-        $changed = Set-WslConfSection `
-            -Config $config `
-            -SectionName $sectionName `
-            -SectionParams $sectionParams
-    }
-    elseif ($state -eq "absent") {
-        $changed = Remove-WslConfSection `
-            -Config $config `
-            -SectionName $sectionName `
-            -SectionParams $sectionParams
-    }
-
-    if ($changed) {
-        $module.Result.changed = $true
-    }
-}
+$headerChanged = Compare-HeaderChange `
+    -module $module `
+    -confPath $confPath `
+    -desiredHeader $header `
+    -currentHeader $currentHeader
 
 if ($module.Result.changed) {
     $module.Diff.before = $beforeSnake
     $module.Diff.after = ConvertTo-SnakeCaseConfig -config $config
-    $afterText = ConvertTo-WslConfText -config $config
+    if ($headerChanged) {
+        $module.Diff.before["header"] = $currentHeader
+        $module.Diff.after["header"] = $header
+    }
+    $afterText = ConvertTo-WslConfText -config $config -header $header
 
     if (-not $module.CheckMode) {
         $utf8NoBom = [System.Text.UTF8Encoding]::new($false)

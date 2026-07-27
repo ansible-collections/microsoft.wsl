@@ -1,13 +1,6 @@
 ---
 - name: Test export and import
   block:
-    - name: Install a distro for testing
-      microsoft.wsl.distribution:
-        name: "{{ test_distribution_name }}"
-        distribution_id: Ubuntu
-        state: present
-        use_ms_store: false
-
     - name: Create export directory
       ansible.windows.win_file:
         path: "{{ test_export_dir }}"

@@ -19,6 +19,20 @@ DOCUMENTATION:
     - ansible.builtin.action_common_attributes
     - microsoft.wsl.wsl_command
 
+  notes:
+    - This module requires that the distribution is running in order to read the config file.
+      It will start the distribution automatically, even in check mode. The module does not
+      take this action into account when reporting on changes.
+    - It is possible that quotations around config values will cause the module to report a change
+      as it reformats the config file, even though the actual value has not changed. This issue
+      is self-correcting; it will only occur on the first run and not subsequent runs.
+    - Comments and blank lines in the existing C(wsl.conf) file are not preserved when the
+      module writes changes. Use the O(header) option to add a comment block at the top
+      of the file.
+    - To manage the entire file, including comments and whitespace, use M(ansible.windows.win_template).
+      For a more surgical approach, consider M(community.windows.win_lineinfile) or scripting with
+      M(ansible.windows.win_shell) or M(microsoft.wsl.command).
+
   options:
     name:
       description:
@@ -44,6 +58,26 @@ DOCUMENTATION:
         - WSL configuration changes in C(wsl.conf) only take effect after the
           distribution is restarted.
         - The distribution is only terminated when configuration changes are made.
+      type: bool
+      default: false
+    header:
+      description:
+        - A text block to include as a comment at the top of the C(wsl.conf) file.
+        - Each line is automatically prefixed with C(# ).
+        - Set to an empty string to disable the header.
+        - By default, the header is only written when other configuration changes are made.
+          Set O(enforce_header) to V(true) to treat header differences as a change.
+      type: str
+      default: >-
+        This file is managed by Ansible (microsoft.wsl.distribution_config).
+        Manual changes and comments may be overwritten.
+    enforce_header:
+      description:
+        - Whether differences in the file header should be treated as a change.
+        - When V(false), the header is only written opportunistically alongside
+          other configuration changes.
+        - When V(true), the module will compare the current header in C(wsl.conf)
+          to the desired O(header) value and report a change if they differ.
       type: bool
       default: false
     automount:
@@ -217,5 +251,29 @@ EXAMPLES: |
       name: Ubuntu
       state: absent
       interop: {}
+
+  - name: Set a custom header comment in wsl.conf
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      header: |-
+        Managed by Ansible - do not edit manually.
+        Last updated by the infrastructure team.
+      boot:
+        systemd: true
+
+  - name: Ensure the header is up to date even if no config changes are needed
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      enforce_header: true
+      header: "Managed by Ansible."
+      boot:
+        systemd: true
+
+  - name: Disable the header comment in wsl.conf
+    microsoft.wsl.distribution_config:
+      name: Ubuntu
+      header: ""
+      boot:
+        systemd: true
 
 RETURN: {}

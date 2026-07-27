@@ -165,21 +165,78 @@ function Read-WslConf {
 }
 
 
+function Read-WslConfHeader {
+    <#
+    .SYNOPSIS
+        Extracts the leading comment block from a wsl.conf file.
+    .DESCRIPTION
+        Reads lines from the start of the file until a non-comment, non-blank
+        line is encountered. Returns the comment text with '# ' prefixes stripped.
+    .PARAMETER path
+        The filesystem path to the wsl.conf file.
+    .OUTPUTS
+        System.String. The header text with comment prefixes removed, or empty string.
+    #>
+    param (
+        [Parameter(Mandatory)]
+        [string]$path
+    )
+
+    if (-not (Test-Path -LiteralPath $path)) {
+        return ""
+    }
+
+    $headerLines = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in (Get-Content -LiteralPath $path)) {
+        $trimmed = $line.Trim()
+        if ($trimmed -eq '') {
+            continue
+        }
+        if ($trimmed.StartsWith('#') -or $trimmed.StartsWith(';')) {
+            $comment = $trimmed.Substring(1)
+            if ($comment.StartsWith(' ')) {
+                $comment = $comment.Substring(1)
+            }
+            $headerLines.Add($comment)
+        }
+        else {
+            break
+        }
+    }
+
+    return ($headerLines -join "`n")
+}
+
+
 function ConvertTo-WslConfText {
     <#
     .SYNOPSIS
         Converts a parsed config OrderedDictionary to INI-format text.
     .PARAMETER config
         An OrderedDictionary of sections.
+    .PARAMETER header
+        Optional header text prepended as comment lines above the first section.
+        Each line is automatically prefixed with '# '.
     .OUTPUTS
         System.String. The INI-format text representation.
     #>
     param (
         [Parameter(Mandatory)]
-        [System.Collections.Specialized.OrderedDictionary]$config
+        [System.Collections.Specialized.OrderedDictionary]$config,
+
+        [AllowNull()]
+        [string]$header = $null
     )
 
     $lines = [System.Collections.Generic.List[string]]::new()
+
+    if ($header) {
+        foreach ($headerLine in $header.Split("`n")) {
+            $lines.Add("# $headerLine")
+        }
+        $lines.Add("")
+    }
+
     $firstSection = $true
 
     foreach ($section in $config.GetEnumerator()) {

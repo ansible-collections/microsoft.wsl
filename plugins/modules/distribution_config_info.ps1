@@ -12,6 +12,7 @@
 $commonOptions = Get-WslCommandCommonOptionsDict
 $moduleOptions = @{
     name = @{ type = "str" }
+    fail_on_unreadable_config = @{ type = "bool"; default = $false }
 }
 $spec = @{
     options = $commonOptions + $moduleOptions
@@ -36,8 +37,27 @@ foreach ($distroName in $distributions.Keys) {
         -wslExe $wslExe `
         -module $module `
         -arguments @("-d", $distroName, "--", "true") | Out-Null
-    $confPath = Get-WslConfPath -name $distroName
-    $parsedConfig = ConvertTo-SnakeCaseConfig -config (Read-WslConf -path $confPath)
+
+    try {
+        $confPath = Get-WslConfPath -name $distroName
+        $parsedConfig = ConvertTo-SnakeCaseConfig -config (Read-WslConf -path $confPath)
+    }
+    catch {
+        if ($module.Params.fail_on_unreadable_config) {
+            $module.FailJson(
+                "Failed to read wsl.conf file for ${distroName}: $($_.Exception.Message)", $_.Exception
+            )
+        }
+        else {
+            $configs[$distroName] = @{
+                name = $distroName
+                config = @{}
+                error = $_.Exception.Message
+            }
+            continue
+        }
+    }
+
     $configs[$distroName] = @{
         name = $distroName
         config = $parsedConfig
