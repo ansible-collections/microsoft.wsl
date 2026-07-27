@@ -1,0 +1,6 @@
+---
+test_distribution_name: "{{ unique_test_id }}-distro"
+test_export_dir: "c:\\temp\\wsl-export-test"
+test_export_path: "{{ test_export_dir }}\\{{ test_distribution_name }}.tar"
+test_import_name: "{{ unique_test_id }}-imported"
+test_import_location: "c:\\temp\\wsl-import-test"

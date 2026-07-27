@@ -1,0 +1,61 @@
+---
+# Copyright: (c) 2026, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+DOCUMENTATION:
+  module: export
+  version_added: "1.0.0"
+  short_description: Export a WSL distribution
+  description:
+    - Export a Windows Subsystem for Linux (WSL) distribution to a tar or VHDX file.
+    - The module is idempotent and will not export if the destination file already exists.
+
+  seealso:
+    - module: microsoft.wsl.import
+    - module: microsoft.wsl.distribution
+    - module: microsoft.wsl.distribution_info
+
+  extends_documentation_fragment:
+    - ansible.builtin.action_common_attributes
+    - microsoft.wsl.wsl_command
+
+  options:
+    name:
+      description:
+        - The name of the distribution to export.
+        - This should match the name used by WSL, such as C(Ubuntu), C(Ubuntu-22.04), or C(Debian).
+        - Use M(microsoft.wsl.distribution_info) to list installed distributions.
+      type: str
+      required: true
+    dest:
+      description:
+        - The destination file path for the export.
+        - The file extension should match the export format. Use C(.tar) for tar exports
+          or C(.vhdx) for VHD exports.
+        - If the file already exists, the module will not export and will report no changes.
+        - If the destination directory does not already exist, this module will create it.
+      type: path
+      required: true
+    vhd:
+      description:
+        - Whether to export the distribution as a VHDX file instead of a tar file.
+        - This is only supported with WSL 2 distributions.
+      type: bool
+      default: false
+
+  author:
+    - Mike Morency (@mikemorency)
+
+EXAMPLES: |
+  - name: Export a distribution to a tar file
+    microsoft.wsl.export:
+      name: Ubuntu
+      dest: C:\Backups\Ubuntu.tar
+
+  - name: Export a distribution as a VHDX file
+    microsoft.wsl.export:
+      name: Ubuntu
+      dest: C:\Backups\Ubuntu.vhdx
+      vhd: true
+
+RETURN: {}

@@ -1,0 +1,41 @@
+---
+- name: Test export and import
+  block:
+    - name: Install a distro for testing
+      microsoft.wsl.distribution:
+        name: "{{ test_distribution_name }}"
+        distribution_id: Ubuntu
+        state: present
+        use_ms_store: false
+
+    - name: Create export directory
+      ansible.windows.win_file:
+        path: "{{ test_export_dir }}"
+        state: directory
+
+    - name: Test export
+      ansible.builtin.include_tasks: export.yml
+
+    - name: Test import
+      ansible.builtin.include_tasks: import.yml
+
+  always:
+    - name: Cleanup - ensure test distro is removed
+      microsoft.wsl.distribution:
+        name: "{{ test_distribution_name }}"
+        state: absent
+
+    - name: Cleanup - ensure imported distro is removed
+      microsoft.wsl.distribution:
+        name: "{{ test_import_name }}"
+        state: absent
+
+    - name: Cleanup - remove export directory
+      ansible.windows.win_file:
+        path: "{{ test_export_dir }}"
+        state: absent
+
+    - name: Cleanup - remove import directory
+      ansible.windows.win_file:
+        path: "{{ test_import_location }}"
+        state: absent

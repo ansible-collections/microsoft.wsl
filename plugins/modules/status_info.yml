@@ -4,6 +4,7 @@
 
 DOCUMENTATION:
   module: status_info
+  version_added: "1.0.0"
   short_description: Get the status and version of WSL and any distributions
   description:
     - Returns information about Windows Subsystem for Linux (WSL) and distributions.

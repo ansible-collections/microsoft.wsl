@@ -1,0 +1,82 @@
+---
+# Copyright: (c) 2026, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+DOCUMENTATION:
+  module: import
+  version_added: "1.0.0"
+  short_description: Import a WSL distribution
+  description:
+    - Import a tar or VHDX file as a new Windows Subsystem for Linux (WSL) distribution.
+    - The module is idempotent and will not import if a distribution with the given name already exists.
+
+  seealso:
+    - module: microsoft.wsl.export
+    - module: microsoft.wsl.distribution
+    - module: microsoft.wsl.distribution_info
+
+  extends_documentation_fragment:
+    - ansible.builtin.action_common_attributes
+    - microsoft.wsl.wsl_command
+
+  options:
+    name:
+      description:
+        - The name to register the imported distribution under.
+        - If a distribution with this name already exists, the module will not import and will report no changes.
+      type: str
+      required: true
+    src:
+      description:
+        - The path to the tar or VHDX file to import.
+        - The file must exist on the target Windows host, not the Ansible controller.
+          Use M(ansible.windows.win_copy) to transfer files between the controller
+          and target if needed.
+      type: str
+      required: true
+    location:
+      description:
+        - The filesystem path where the distribution should be installed.
+      type: str
+      required: true
+    version:
+      description:
+        - The WSL version to use for the imported distribution.
+        - If not specified, the WSL default version is used.
+      type: int
+      choices:
+        - 1
+        - 2
+    vhd:
+      description:
+        - Whether the source file is a VHDX file instead of a tar file.
+        - This is only supported with WSL 2.
+      type: bool
+      default: false
+    remove_src:
+      description:
+        - Whether to delete the source file after a successful import.
+        - The file is only removed when an import actually occurs. It is not removed
+          if the distribution already exists or if check mode is enabled.
+      type: bool
+      default: false
+
+  author:
+    - Mike Morency (@mikemorency)
+
+EXAMPLES: |
+  - name: Import a distribution from a tar file
+    microsoft.wsl.import:
+      name: my-distro
+      src: C:\Backups\Ubuntu.tar
+      location: C:\WSL\my-distro
+
+  - name: Import a distribution from a VHDX file
+    microsoft.wsl.import:
+      name: my-distro
+      src: C:\Backups\Ubuntu.vhdx
+      location: C:\WSL\my-distro
+      vhd: true
+      version: 2
+
+RETURN: {}
