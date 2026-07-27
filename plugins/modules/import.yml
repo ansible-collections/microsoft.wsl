@@ -4,6 +4,7 @@
 
 DOCUMENTATION:
   module: import
+  version_added: "1.0.0"
   short_description: Import a WSL distribution
   description:
     - Import a tar or VHDX file as a new Windows Subsystem for Linux (WSL) distribution.

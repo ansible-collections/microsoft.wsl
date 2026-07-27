@@ -4,6 +4,7 @@
 
 DOCUMENTATION:
   module: distribution_info
+  version_added: "1.0.0"
   short_description: Get detailed information about WSL distributions
   description:
     - Returns detailed information about installed Windows Subsystem for Linux (WSL) distributions.

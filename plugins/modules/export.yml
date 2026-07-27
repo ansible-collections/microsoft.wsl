@@ -4,6 +4,7 @@
 
 DOCUMENTATION:
   module: export
+  version_added: "1.0.0"
   short_description: Export a WSL distribution
   description:
     - Export a Windows Subsystem for Linux (WSL) distribution to a tar or VHDX file.

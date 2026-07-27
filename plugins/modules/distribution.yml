@@ -4,6 +4,7 @@
 
 DOCUMENTATION:
   module: distribution
+  version_added: "1.0.0"
   short_description: Manage WSL distributions
   description:
     - Install, unregister (uninstall), or manage Windows Subsystem for Linux (WSL) distributions.
