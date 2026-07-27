@@ -45,7 +45,7 @@ if ($module.CheckMode) {
 }
 
 $parentDir = Split-Path -Path $dest -Parent
-if ($parentDir) {
+if ($parentDir -and -not (Test-Path -LiteralPath $parentDir)) {
     New-Item -Path $parentDir -Force -ItemType Directory | Out-Null
 }
 

@@ -15,7 +15,7 @@ $moduleOptions = @{
     state = @{ type = "str"; default = "present"; choices = @("present", "absent") }
     version = @{ type = "int"; choices = @(1, 2); }
     size = @{ type = "int"; }
-    location = @{ type = "str"; }
+    location = @{ type = "path"; }
     sparse = @{ type = "bool"; }
     use_ms_store = @{ type = "bool"; default = $true }
     use_fixed_vhd = @{ type = "bool"; default = $false }

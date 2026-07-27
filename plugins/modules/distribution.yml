@@ -68,7 +68,7 @@ DOCUMENTATION:
     location:
       description:
         - The filesystem path where the distribution should be installed or moved to.
-      type: str
+      type: path
     sparse:
       description:
         - Whether the distribution's VHD should use sparse file allocation.

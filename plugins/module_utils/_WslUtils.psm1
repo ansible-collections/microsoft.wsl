@@ -127,7 +127,7 @@ function Invoke-WslCommand {
     $psi.FileName = $wslExe.Source
     $psi.Arguments = (
         $arguments | ForEach-Object {
-            if ($_ -match '\s') { "`"$_`"" } else { $_ }
+            if ($_ -match '[\s"]') { "`"$($_ -replace '"', '\"')`"" } else { $_ }
         }
     ) -join ' '
     $psi.RedirectStandardOutput = $true

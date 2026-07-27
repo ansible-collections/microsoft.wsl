@@ -11,8 +11,8 @@
 $commonOptions = Get-WslCommandCommonOptionsDict
 $moduleOptions = @{
     name = @{ type = "str"; required = $true }
-    src = @{ type = "str"; required = $true }
-    location = @{ type = "str"; required = $true }
+    src = @{ type = "path"; required = $true }
+    location = @{ type = "path"; required = $true }
     version = @{ type = "int"; choices = @(1, 2) }
     vhd = @{ type = "bool"; default = $false }
     remove_src = @{ type = "bool"; default = $false }

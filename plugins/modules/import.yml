@@ -32,12 +32,12 @@ DOCUMENTATION:
         - The file must exist on the target Windows host, not the Ansible controller.
           Use M(ansible.windows.win_copy) to transfer files between the controller
           and target if needed.
-      type: str
+      type: path
       required: true
     location:
       description:
         - The filesystem path where the distribution should be installed.
-      type: str
+      type: path
       required: true
     version:
       description:
