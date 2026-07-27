@@ -32,7 +32,8 @@ DOCUMENTATION:
         - The file extension should match the export format. Use C(.tar) for tar exports
           or C(.vhdx) for VHD exports.
         - If the file already exists, the module will not export and will report no changes.
-      type: str
+        - If the destination directory does not already exist, this module will create it.
+      type: path
       required: true
     vhd:
       description:

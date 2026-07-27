@@ -11,7 +11,7 @@
 $commonOptions = Get-WslCommandCommonOptionsDict
 $moduleOptions = @{
     name = @{ type = "str"; required = $true }
-    dest = @{ type = "str"; required = $true }
+    dest = @{ type = "path"; required = $true }
     vhd = @{ type = "bool"; default = $false }
 }
 $spec = @{
@@ -42,6 +42,11 @@ $module.Diff.after = @{ "dest" = $dest }
 
 if ($module.CheckMode) {
     $module.ExitJson()
+}
+
+$parentDir = Split-Path -Path $dest -Parent
+if ($parentDir) {
+    New-Item -Path $parentDir -Force -ItemType Directory | Out-Null
 }
 
 $exportParams = [System.Collections.Generic.List[string]]::new()
