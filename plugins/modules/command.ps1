@@ -56,7 +56,8 @@ $result = Invoke-WslCommand `
     -wslExe $wslExe `
     -module $module `
     -arguments $wslArgs `
-    -continueOnError
+    -continueOnError `
+    -rawOutput
 
 $module.Result.changed = $true
 $module.Result.rc = $result.exit_code

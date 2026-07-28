@@ -16,10 +16,10 @@
           - _simple.stderr is defined
           - _simple.stderr_lines is defined
 
-    - name: Run a command that fails
+    - name: Run a command that fails with mixed output
       microsoft.wsl.command:
         name: "{{ test_distribution_name }}"
-        command: exit 42
+        command: echo 'some diagnostic output' && exit 1
       register: _failed
       ignore_errors: true
 
@@ -27,7 +27,9 @@
       ansible.builtin.assert:
         that:
           - _failed is failed
-          - _failed.rc == 42
+          - _failed.rc == 1
+          - _failed.stdout is search('some diagnostic output')
+          - _failed.stderr == ""
 
     - name: Run a command as root
       microsoft.wsl.command:
