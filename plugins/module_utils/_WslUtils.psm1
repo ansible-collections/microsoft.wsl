@@ -159,14 +159,14 @@ function Invoke-WslCommand {
     $process.WaitForExit()
 
     $resolveParams = @{
-        module          = $module
-        arguments       = $arguments
-        stdout          = $stdout
-        stderr          = $stderr
-        exitCode        = $process.ExitCode
-        successCodes    = $successCodes
+        module = $module
+        arguments = $arguments
+        stdout = $stdout
+        stderr = $stderr
+        exitCode = $process.ExitCode
+        successCodes = $successCodes
         continueOnError = $continueOnError
-        rawOutput       = $rawOutput
+        rawOutput = $rawOutput
     }
     Resolve-WslCommandResult @resolveParams
 
