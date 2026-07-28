@@ -25,13 +25,13 @@ $wslExe = Test-WslInstall -module $module
 
 
 function Get-Status {
-    $stdout, $stderr = Invoke-WslCommand `
+    $result = Invoke-WslCommand `
         -wslExe $wslExe `
         -module $module `
         -arguments @("--status") `
         -successCodes @(0, -444)
 
-    $versionMatch = $stdout | Select-String -Pattern 'Default Version: (\d+)'
+    $versionMatch = $result.stdout | Select-String -Pattern 'Default Version: (\d+)'
     $module.Result.default_version = if ($versionMatch) { [int]$versionMatch.Matches.Groups[1].Value } else { $null }
     $distroMatch = $stdout | Select-String -Pattern 'Default Distribution: (.+)'
     $module.Result.default_distribution = if ($distroMatch) { $distroMatch.Matches.Groups[1].Value.Trim() } else { $null }
@@ -39,12 +39,12 @@ function Get-Status {
 
 
 function Get-OnlineDistroInfo {
-    $stdout, $stderr = Invoke-WslCommand `
+    $result = Invoke-WslCommand `
         -wslExe $wslExe `
         -module $module `
         -arguments @("--list", "--online")
 
-    $lines = Split-StdText $stdout
+    $lines = Split-StdText $result.stdout
     $distributions = @{}
     foreach ($line in ($lines | Select-Object -Skip 1)) {
         if ($line -match '^\s*(.+?)\s{2,}(.+?)\s*$') {

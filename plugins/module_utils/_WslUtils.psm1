@@ -105,8 +105,11 @@ function Invoke-WslCommand {
         An array of arguments to pass to wsl.exe.
     .PARAMETER successCodes
         An array of exit codes considered successful. Defaults to @(0).
+    .PARAMETER continueOnError
+        If set, the function will not fail the module on non-success exit codes.
     .OUTPUTS
-        System.String[]. A two-element array of (stdout, stderr).
+        System.Collections.Hashtable. A hashtable with keys: stdout (string),
+        stderr (string), and exit_code (int).
     #>
     param (
         [Parameter(Mandatory)]
@@ -121,7 +124,9 @@ function Invoke-WslCommand {
         [array]$arguments = @(),
 
         [ValidateNotNull()]
-        [array]$successCodes = @(0)
+        [array]$successCodes = @(0),
+
+        [switch]$continueOnError
     )
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $wslExe.Source
@@ -157,18 +162,24 @@ function Invoke-WslCommand {
             $stdout = ""
         }
         Write-StdText -module $module -stdout $stdout -stderr $stderr
-        $message = "WSL command returned an unexpected exit code, $($process.ExitCode)"
-        if ($stderr.length -gt 0) {
-            $message += ": $stderr"
+        if (-not $continueOnError) {
+            $message = "WSL command returned an unexpected exit code, $($process.ExitCode)"
+            if ($stderr.length -gt 0) {
+                $message += ": $stderr"
+            }
+            $module.FailJson($message)
         }
-        $module.FailJson($message)
     }
 
     if (($module.Params.log_command_output -eq $True)) {
         Write-StdText -module $module -stdout $stdout -stderr $stderr
     }
 
-    return $stdout, $stderr
+    return @{
+        "stdout" = $stdout
+        "stderr" = $stderr
+        "exit_code" = $process.ExitCode
+    }
 }
 
 

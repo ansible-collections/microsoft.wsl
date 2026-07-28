@@ -25,13 +25,13 @@ function Get-DistributionRuntimeInfo {
         [string]$name,
         [switch]$flat
     )
-    $stdout, $stderr = Invoke-WslCommand `
+    $result = Invoke-WslCommand `
         -wslExe $wslExe `
         -module $module `
         -arguments @("--list", "--verbose") `
         -successCodes @(0, -1)  # -1 if no distros are found
 
-    $lines = Split-StdText $stdout
+    $lines = Split-StdText $result.stdout
     $distributions = @{}
     foreach ($line in ($lines | Select-Object -Skip 1)) {
         if ($line -match '^\s*(\*)?\s*(.+?)\s+(Stopped|Running|Installing|Uninstalling|Converting|Exporting)\s+(\d+)\s*$') {
