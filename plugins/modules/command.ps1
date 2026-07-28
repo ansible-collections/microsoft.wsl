@@ -50,7 +50,7 @@ $wslArgs.AddRange([string[]]@("-e", $executable, "-c", $command))
 # reset stdout/stderr. We want to log the previous command output for debugging purposes, but
 # now that the module has made it this far, we really only want to capture the output from the
 # actual command.
- @('stdout', 'stdout_lines', 'stderr', 'stderr_lines') | ForEach-Object { $module.result.Remove($_) | out-null }
+@('stdout', 'stdout_lines', 'stderr', 'stderr_lines') | ForEach-Object { $module.result.Remove($_) | out-null }
 
 $result = Invoke-WslCommand `
     -wslExe $wslExe `

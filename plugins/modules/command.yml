@@ -95,28 +95,28 @@ EXAMPLES: |
       working_directory: /opt/webapp
       user: www-data
 
-    - name: Use Ansible to run Ansible
-      block:
-        - name: Install ansible
-          microsoft.wsl.command:
-            name: Ubuntu
-            command: |
-              apt update -y;
-              apt install -y ansible-core;
-            log_command_output: false
-        - name: Gather distro OS facts
-          microsoft.wsl.command:
-            name: Ubuntu
-            command: >-
-              ANSIBLE_LOAD_CALLBACK_PLUGINS=true
-              ANSIBLE_STDOUT_CALLBACK=json
-              ansible -m setup localhost
-          register: _nested_gather
-        - name: Print facts
-          ansible.builtin.debug:
-            var: playbook_output.plays[0].tasks[0].hosts.localhost.ansible_facts
-          vars:
-            playbook_output: "{{ _nested_gather.stdout | from_json }}"
+  - name: Use Ansible to run Ansible
+    block:
+      - name: Install ansible
+        microsoft.wsl.command:
+          name: Ubuntu
+          command: |
+            apt update -y;
+            apt install -y ansible-core;
+          log_command_output: false
+      - name: Gather distro OS facts
+        microsoft.wsl.command:
+          name: Ubuntu
+          command: >-
+            ANSIBLE_LOAD_CALLBACK_PLUGINS=true
+            ANSIBLE_STDOUT_CALLBACK=json
+            ansible -m setup localhost
+        register: _nested_gather
+      - name: Print facts
+        ansible.builtin.debug:
+          var: playbook_output.plays[0].tasks[0].hosts.localhost.ansible_facts
+        vars:
+          playbook_output: "{{ _nested_gather.stdout | from_json }}"
 
 RETURN:
   rc:
