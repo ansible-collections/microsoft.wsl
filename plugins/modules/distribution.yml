@@ -63,7 +63,7 @@ DOCUMENTATION:
       description:
         - The desired VHD size for the distribution in gigabytes.
         - The existing disk size is rounded to the nearest whole GB for comparison.
-        - Resizing operations require that the VHD is uncompressed, unecrypted, and not sparse.
+        - Resizing operations require that the VHD is uncompressed, unencrypted, and not sparse.
       type: int
     location:
       description:

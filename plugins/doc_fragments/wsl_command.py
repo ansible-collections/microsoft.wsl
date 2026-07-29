@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Ansible Project
+# Copyright (c) 2026 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
@@ -29,10 +29,10 @@ requirements:
   - WSL installed and operational on the target host
 
 notes:
-  - Modules that parse the output of the WSL executable depend on an English output. If the language output
-    by the executable is non-English, it is possible the module will not work as intended. If Microsoft introduces
-    a way to set the output for the executable without affecting the rest of the operating system, this
-    restriction may be removed.
+  - Modules that parse the output of the WSL executable depend on English-language output. If the executable
+    outputs in a non-English language, it is possible the module will not work as intended. If Microsoft introduces
+    a way to set the output language for the executable without affecting the rest of the operating system, this
+    restriction may be lifted.
 
 seealso:
   - name: Microsoft WSL Documentation
