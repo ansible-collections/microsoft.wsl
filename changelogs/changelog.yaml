@@ -1,3 +1,43 @@
 ---
 ancestor: null
-releases: {}
+releases:
+  1.0.0:
+    changes:
+      minor_changes:
+        - command - add module to run a command in a WSL distribution
+        - distribution - add module to manage WSL distributions
+        - distribution_config - add module to manage a WSL distribution's configuration
+        - distribution_config_info - add module to get the wsl.conf configuration
+          for WSL distributions
+        - distribution_info - add module to get detailed information about WSL distributions
+        - export - add module to export a WSL distribution
+        - import - add module to import a WSL distribution
+        - status_info - add module to get the status and version of WSL distributions
+    fragments:
+      - first_release.yml
+    modules:
+      - description: Run a command in a WSL distribution.
+        name: command
+        namespace: ''
+      - description: Manage WSL distributions.
+        name: distribution
+        namespace: ''
+      - description: Manage a WSL distribution's configuration.
+        name: distribution_config
+        namespace: ''
+      - description: Get the wsl.conf configuration for WSL distributions.
+        name: distribution_config_info
+        namespace: ''
+      - description: Get detailed information about WSL distributions.
+        name: distribution_info
+        namespace: ''
+      - description: Export a WSL distribution.
+        name: export
+        namespace: ''
+      - description: Import a WSL distribution.
+        name: import
+        namespace: ''
+      - description: Get the status and version of WSL and any distributions.
+        name: status_info
+        namespace: ''
+    release_date: '2026-07-29'

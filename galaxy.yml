@@ -3,7 +3,7 @@
 
 namespace: microsoft
 name: wsl
-version: 0.1.0
+version: 1.0.0
 readme: README.md
 authors:
   - Ansible Eco Content Team (github.com/eco-ansible-content)
