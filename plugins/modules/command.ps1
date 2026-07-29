@@ -22,11 +22,24 @@ $spec = @{
     supports_check_mode = $false
 }
 
+
+function Reset-CommandOutputResult {
+    param (
+        $module
+    )
+    $module.Result.stdout = ""
+    $module.Result.stdout_lines = [System.Collections.Generic.List[string]]::new()
+    $module.Result.stderr = ""
+    $module.Result.stderr_lines = [System.Collections.Generic.List[string]]::new()
+}
+
+
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 $name = $module.Params.name
 $command = $module.Params.command
 
 $wslExe = Test-WslInstall -module $module
+Reset-CommandOutputResult
 
 $currentDistro = Get-DistributionRuntimeInfo -wslExe $wslExe -module $module -name $name -flat
 if ($null -eq $currentDistro) {
@@ -50,7 +63,7 @@ $wslArgs.AddRange([string[]]@("-e", $executable, "-c", $command))
 # reset stdout/stderr. We want to log the previous command output for debugging purposes, but
 # now that the module has made it this far, we really only want to capture the output from the
 # actual command.
-@('stdout', 'stdout_lines', 'stderr', 'stderr_lines') | ForEach-Object { $module.result.Remove($_) | out-null }
+Reset-CommandOutputResult
 
 $result = Invoke-WslCommand `
     -wslExe $wslExe `
