@@ -4,6 +4,7 @@
 
 DOCUMENTATION:
   module: distribution_config_info
+  version_added: "1.0.0"
   short_description: Get the wsl.conf configuration for WSL distributions
   description:
     - Returns the parsed contents of the C(/etc/wsl.conf) configuration file

@@ -18,7 +18,7 @@ DOCUMENTATION:
   options:
     gather_online:
       description:
-        - If true, the `--online` flag will be used when gathering information about distributions.
+        - If true, the C(--online) flag will be used when gathering information about distributions.
         - This means that all available distributions, and not just those installed locally, will be listed.
       type: bool
       default: false

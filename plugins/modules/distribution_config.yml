@@ -4,6 +4,7 @@
 
 DOCUMENTATION:
   module: distribution_config
+  version_added: "1.0.0"
   short_description: Manage a WSL distribution's configuration
   description:
     - Manage the C(/etc/wsl.conf) configuration file for a Windows Subsystem for Linux (WSL) distribution.
@@ -29,6 +30,8 @@ DOCUMENTATION:
     - To manage the entire file, including comments and whitespace, use M(ansible.windows.win_template).
       For a more surgical approach, consider M(community.windows.win_lineinfile) or scripting with
       M(ansible.windows.win_shell) or M(microsoft.wsl.command).
+    - To set global configurations (settings for all WSL distributions), manage the C(~\.wslconfig) file
+      using M(ansible.windows.win_copy) or M(ansible.windows.win_template).
 
   attributes:
     check_mode:

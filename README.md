@@ -17,6 +17,10 @@ There are no special requirements for the Ansible controller to run this content
 
 This collection has been tested against following Ansible versions: **>=2.16.0**.
 
+### Windows Compatibility
+
+This collection supports Windows 10 and later, as well as Windows Server 2019 and later.
+
 
 ## Installation
 
@@ -55,9 +59,10 @@ ansible-galaxy collection install microsoft.wsl:1.0.0
   * Description:
     * A systems administrator can create, configure and manage WSL distributions on Windows hosts.
   * Flow:
-    * Install and configure WSL distributions
-    * Manage WSL distribution settings and configurations
-    * Ensure distributions are in the correct state
+    * Install and configure WSL distributions (`microsoft.wsl.distribution`)
+    * Manage WSL distribution settings and configurations (`microsoft.wsl.distribution_config`)
+    * Export and import distributions for backup or migration (`microsoft.wsl.export`, `microsoft.wsl.import`)
+    * Run commands inside WSL distributions (`microsoft.wsl.command`)
 
 * Use Case Name: Gather Information About WSL Resources
   * Actors:
@@ -65,15 +70,14 @@ ansible-galaxy collection install microsoft.wsl:1.0.0
   * Description:
     * The system administrator can gather detailed information about WSL distributions and their configurations for reporting.
   * Flow:
-    * Gather details about installed WSL distributions
-    * Gather WSL configuration and version information
-    * Report on distribution state and settings
+    * Gather details about installed WSL distributions (`microsoft.wsl.distribution_info`)
+    * Gather WSL configuration and version information (`microsoft.wsl.status_info`)
+    * Gather distribution-level configuration from wsl.conf (`microsoft.wsl.distribution_config_info`)
 
 
 ## Testing
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ansible-collections_microsoft.wsl&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ansible-collections_microsoft.wsl)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ansible-collections_microsoft.wsl&metric=coverage)](https://sonarcloud.io/summary/new_code?id=ansible-collections_microsoft.wsl)
+[![Ansible Test](https://github.com/ansible-collections/microsoft.wsl/actions/workflows/integration-test.yml/badge.svg)](https://github.com/ansible-collections/microsoft.wsl/actions/workflows/integration-test.yml)
 
 Static analysis and coverage are tracked on [SonarCloud](https://sonarcloud.io/project/overview?id=ansible-collections_microsoft.wsl). See [docs/sonarcloud.md](docs/sonarcloud.md) for CI wiring and contributor notes.
 
@@ -107,6 +111,8 @@ For more information about communication, see the [Ansible communication guide](
 
 
 ## Support
+
+As Red Hat Ansible Certified Content, this collection is entitled to support through the Ansible Automation Platform (AAP) using the **Create issue** button on the top right corner.
 
 If a support case cannot be opened with Red Hat and the collection has been obtained either from Galaxy or GitHub, there may community help available via:
 - GitHub issues for bugs or feature requests: https://github.com/ansible-collections/microsoft.wsl/issues

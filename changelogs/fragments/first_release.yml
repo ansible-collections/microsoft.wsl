@@ -1,0 +1,10 @@
+---
+minor_changes:
+  - command - add module to run a command in a WSL distribution
+  - distribution - add module to manage WSL distributions
+  - distribution_config - add module to manage a WSL distribution's configuration
+  - distribution_config_info - add module to get the wsl.conf configuration for WSL distributions
+  - distribution_info - add module to get detailed information about WSL distributions
+  - export - add module to export a WSL distribution
+  - import - add module to import a WSL distribution
+  - status_info - add module to get the status and version of WSL distributions

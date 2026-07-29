@@ -8,7 +8,7 @@ DOCUMENTATION:
   short_description: Run a command in a WSL distribution
   description:
     - Run a command inside a Windows Subsystem for Linux (WSL) distribution using C(wsl.exe).
-    - This module runs the command using the wsl.exe --exec command from the target host's powershell
+    - This module runs the command using the C(wsl.exe --exec) command from the target host's PowerShell
       environment.
 
   extends_documentation_fragment:

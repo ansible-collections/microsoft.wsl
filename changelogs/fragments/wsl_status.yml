@@ -1,4 +1,0 @@
----
-minor_changes:
-  - wsl_status - new module to get the status and version of WSL distributions
-    (https://redhat.atlassian.net/browse/ACA-4733).
