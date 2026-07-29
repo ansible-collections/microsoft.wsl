@@ -39,7 +39,7 @@ $name = $module.Params.name
 $command = $module.Params.command
 
 $wslExe = Test-WslInstall -module $module
-Reset-CommandOutputResult
+Reset-CommandOutputResult -module $module
 
 $currentDistro = Get-DistributionRuntimeInfo -wslExe $wslExe -module $module -name $name -flat
 if ($null -eq $currentDistro) {
@@ -63,7 +63,7 @@ $wslArgs.AddRange([string[]]@("-e", $executable, "-c", $command))
 # reset stdout/stderr. We want to log the previous command output for debugging purposes, but
 # now that the module has made it this far, we really only want to capture the output from the
 # actual command.
-Reset-CommandOutputResult
+Reset-CommandOutputResult -module $module
 
 $result = Invoke-WslCommand `
     -wslExe $wslExe `
