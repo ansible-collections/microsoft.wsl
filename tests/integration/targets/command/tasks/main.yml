@@ -1,0 +1,146 @@
+---
+- name: Test command module
+  block:
+    - name: Run a simple successful command
+      microsoft.wsl.command:
+        name: "{{ test_distribution_name }}"
+        command: echo "hello world"
+      register: _simple
+
+    - name: Assert successful command return values
+      ansible.builtin.assert:
+        that:
+          - _simple.rc == 0
+          - _simple.stdout is search('hello world')
+          - _simple.stdout_lines | length > 0
+          - _simple.stderr is defined
+          - _simple.stderr_lines is defined
+
+    - name: Run a command that fails with mixed output
+      microsoft.wsl.command:
+        name: "{{ test_distribution_name }}"
+        command: echo 'some diagnostic output' && exit 1
+      register: _failed
+      ignore_errors: true
+
+    - name: Assert failed command return values
+      ansible.builtin.assert:
+        that:
+          - _failed is failed
+          - _failed.rc == 1
+          - _failed.stdout is search('some diagnostic output')
+          - _failed.stderr == ""
+
+    - name: Run a command as root
+      microsoft.wsl.command:
+        name: "{{ test_distribution_name }}"
+        command: whoami
+        user: root
+      register: _user
+
+    - name: Assert command ran as root
+      ansible.builtin.assert:
+        that:
+          - _user.rc == 0
+          - _user.stdout is search('root')
+
+    - name: Run a command in a specific directory
+      microsoft.wsl.command:
+        name: "{{ test_distribution_name }}"
+        command: pwd
+        working_directory: /tmp
+      register: _workdir
+
+    - name: Assert working directory was used
+      ansible.builtin.assert:
+        that:
+          - _workdir.rc == 0
+          - _workdir.stdout is search('/tmp')
+
+    - name: Run a piped command
+      microsoft.wsl.command:
+        name: "{{ test_distribution_name }}"
+        command: echo foo bar baz | tr ' ' '\n' | wc -l
+      register: _pipe
+
+    - name: Assert piped command output
+      ansible.builtin.assert:
+        that:
+          - _pipe.rc == 0
+          - _pipe.stdout is search('3')
+
+    - name: Run a chained command
+      microsoft.wsl.command:
+        name: "{{ test_distribution_name }}"
+        command: echo first && echo second && echo third
+      register: _chain
+
+    - name: Assert chained command output
+      ansible.builtin.assert:
+        that:
+          - _chain.rc == 0
+          - _chain.stdout is search('first')
+          - _chain.stdout is search('second')
+          - _chain.stdout is search('third')
+
+    - name: Run a command with stderr output
+      microsoft.wsl.command:
+        name: "{{ test_distribution_name }}"
+        command: echo error_output >&2
+      register: _stderr
+
+    - name: Assert stderr was captured
+      ansible.builtin.assert:
+        that:
+          - _stderr.rc == 0
+          - _stderr.stderr is search('error_output')
+          - _stderr.stderr_lines | length > 0
+
+    - name: Run a multiline command
+      microsoft.wsl.command:
+        name: "{{ test_distribution_name }}"
+        command: |
+          for i in 1 2 3;
+            do echo "line $i";
+          done
+      register: _multiline
+
+    - name: Assert multiline command output
+      ansible.builtin.assert:
+        that:
+          - _multiline.rc == 0
+          - _multiline.stdout_lines | length == 3
+          - _multiline.stdout is search('line 1')
+          - _multiline.stdout is search('line 3')
+
+    - name: Run a command with a specific executable
+      microsoft.wsl.command:
+        name: "{{ test_distribution_name }}"
+        command: echo "BASH_VERSION is $BASH_VERSION"
+        executable: /bin/bash
+      register: _executable
+
+    - name: Assert executable was used
+      ansible.builtin.assert:
+        that:
+          - _executable.rc == 0
+          - _executable.stdout is search('BASH_VERSION is')
+
+    - name: Run a command against a non-existent distribution
+      microsoft.wsl.command:
+        name: DoesNotExist
+        command: echo hello
+      register: _missing_distro
+      ignore_errors: true
+
+    - name: Assert non-existent distribution fails
+      ansible.builtin.assert:
+        that:
+          - _missing_distro is failed
+          - "'was not found' in _missing_distro.msg"
+
+  always:
+    - name: Cleanup - ensure test distro is removed
+      microsoft.wsl.distribution:
+        name: "{{ test_distribution_name }}"
+        state: absent

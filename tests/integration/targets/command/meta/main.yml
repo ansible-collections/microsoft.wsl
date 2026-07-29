@@ -1,0 +1,5 @@
+---
+dependencies:
+  - setup_wsl
+  - role: setup_test_distro
+    setup_test_distro_name: "{{ test_distribution_name }}"

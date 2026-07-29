@@ -1,0 +1,144 @@
+---
+# Copyright: (c) 2026, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+DOCUMENTATION:
+  module: command
+  version_added: "1.0.0"
+  short_description: Run a command in a WSL distribution
+  description:
+    - Run a command inside a Windows Subsystem for Linux (WSL) distribution using C(wsl.exe).
+    - This module runs the command using the wsl.exe --exec command from the target host's powershell
+      environment.
+
+  extends_documentation_fragment:
+    - ansible.builtin.action_common_attributes
+    - microsoft.wsl.wsl_command
+
+  attributes:
+    check_mode:
+      support: none
+    diff_mode:
+      support: none
+
+  options:
+    log_command_output:
+      default: true
+
+    name:
+      description:
+        - The name of the distribution to run the command in.
+        - This should match the name used by WSL, such as C(Ubuntu), C(Ubuntu-22.04), or C(Debian).
+        - Use M(microsoft.wsl.distribution_info) to list installed distributions.
+      type: str
+      required: true
+    command:
+      description:
+        - The command to run inside the distribution.
+        - The command is executed via the shell specified by O(executable) using
+          C(-c), so shell features such as pipes, redirects, and command chaining
+          (C(&&), C(||)) are supported.
+      type: str
+      required: true
+    executable:
+      description:
+        - The shell to use when executing the command inside the distribution.
+        - The shell must support the C(-c) flag for passing a command string.
+        - Common options include C(/bin/sh), C(/bin/bash), C(/bin/zsh), etc.
+      type: str
+      default: /bin/sh
+    user:
+      description:
+        - The Linux user to run the command as inside the distribution.
+        - If not specified, the default user configured for the distribution is used.
+      type: str
+    working_directory:
+      description:
+        - The working directory inside the distribution to run the command in.
+        - This should be a Linux path, such as C(/home/user) or C(/tmp).
+        - If not specified, the default working directory is used.
+      type: str
+
+  author:
+    - Mike Morency (@mikemorency)
+
+EXAMPLES: |
+  - name: Update package cache and install nginx
+    microsoft.wsl.command:
+      name: Ubuntu
+      command: apt-get update && apt-get install -y nginx
+      user: root
+
+  - name: Check available disk space
+    microsoft.wsl.command:
+      name: Ubuntu
+      command: df -h /
+    register: disk_usage
+
+  - name: Restart a service inside the distribution
+    microsoft.wsl.command:
+      name: Ubuntu-22.04
+      command: systemctl restart postgresql
+      user: root
+
+  - name: Create a backup of the application config
+    microsoft.wsl.command:
+      name: Debian
+      command: tar czf /backups/app-config-$(date +%F).tar.gz /etc/myapp/
+      user: root
+      executable: /bin/bash
+
+  - name: Run a database migration script from the project directory
+    microsoft.wsl.command:
+      name: Ubuntu
+      command: python3 manage.py migrate --no-input
+      working_directory: /opt/webapp
+      user: www-data
+
+  - name: Use Ansible to run Ansible
+    block:
+      - name: Install ansible
+        microsoft.wsl.command:
+          name: Ubuntu
+          command: |
+            apt update -y;
+            apt install -y ansible-core;
+          log_command_output: false
+      - name: Gather distro OS facts
+        microsoft.wsl.command:
+          name: Ubuntu
+          command: >-
+            ANSIBLE_LOAD_CALLBACK_PLUGINS=true
+            ANSIBLE_STDOUT_CALLBACK=json
+            ansible -m setup localhost
+        register: _nested_gather
+      - name: Print facts
+        ansible.builtin.debug:
+          var: playbook_output.plays[0].tasks[0].hosts.localhost.ansible_facts
+        vars:
+          playbook_output: "{{ _nested_gather.stdout | from_json }}"
+
+RETURN:
+  rc:
+    description: The return code of the command.
+    returned: always
+    type: int
+    sample: 0
+  stdout:
+    description: The stdout from the command.
+    returned: always
+    type: str
+  stderr:
+    description: The stderr from the command.
+    returned: always
+    type: str
+  stdout_lines:
+    description: The stdout from the command split into a list of lines.
+    returned: always
+    type: list
+    elements: str
+  stderr_lines:
+    description: The stderr from the command split into a list of lines.
+    returned: always
+    type: list
+    elements: str

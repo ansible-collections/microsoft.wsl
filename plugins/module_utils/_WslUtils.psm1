@@ -105,8 +105,14 @@ function Invoke-WslCommand {
         An array of arguments to pass to wsl.exe.
     .PARAMETER successCodes
         An array of exit codes considered successful. Defaults to @(0).
+    .PARAMETER continueOnError
+        If set, the function will not fail the module on non-success exit codes.
+    .PARAMETER rawOutput
+        If set, stdout and stderr are reported as-is without applying the
+        WSL built-in command output swap. Passed through to Resolve-WslCommandResult.
     .OUTPUTS
-        System.String[]. A two-element array of (stdout, stderr).
+        System.Collections.Hashtable. A hashtable with keys: stdout (string),
+        stderr (string), and exit_code (int).
     #>
     param (
         [Parameter(Mandatory)]
@@ -121,7 +127,11 @@ function Invoke-WslCommand {
         [array]$arguments = @(),
 
         [ValidateNotNull()]
-        [array]$successCodes = @(0)
+        [array]$successCodes = @(0),
+
+        [switch]$continueOnError,
+
+        [switch]$rawOutput
     )
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $wslExe.Source
@@ -148,27 +158,94 @@ function Invoke-WslCommand {
     $stderr = $stderrTask.GetAwaiter().GetResult()
     $process.WaitForExit()
 
-    # Handle error exit codes gracefully
-    if ($process.ExitCode -notin $successCodes) {
+    $resolveParams = @{
+        module = $module
+        arguments = $arguments
+        stdout = $stdout
+        stderr = $stderr
+        exitCode = $process.ExitCode
+        successCodes = $successCodes
+        continueOnError = $continueOnError
+        rawOutput = $rawOutput
+    }
+    Resolve-WslCommandResult @resolveParams
+
+    return @{
+        "stdout" = $stdout
+        "stderr" = $stderr
+        "exit_code" = $process.ExitCode
+    }
+}
+
+
+function Resolve-WslCommandResult {
+    <#
+    .SYNOPSIS
+        Processes the result of a wsl.exe invocation.
+    .DESCRIPTION
+        Logs stdout/stderr to the module result and optionally fails the module
+        when the exit code is not in the expected success codes.
+    .PARAMETER module
+        The Ansible.Basic.AnsibleModule instance.
+    .PARAMETER arguments
+        The arguments that were passed to wsl.exe.
+    .PARAMETER stdout
+        The standard output from the process.
+    .PARAMETER stderr
+        The standard error from the process.
+    .PARAMETER exitCode
+        The exit code from the process.
+    .PARAMETER successCodes
+        An array of exit codes considered successful. Defaults to @(0).
+    .PARAMETER continueOnError
+        If set, the function will not fail the module on non-success exit codes.
+    .PARAMETER rawOutput
+        If set, stdout and stderr are reported as-is without applying the
+        WSL built-in command output swap. Use this for user-supplied commands
+        that may legitimately produce stdout with a non-zero exit code.
+    #>
+    param (
+        [Parameter(Mandatory)]
+        [ValidateNotNull()]
+        [object]$module,
+
+        [ValidateNotNull()]
+        [array]$arguments = @(),
+
+        [string]$stdout = "",
+
+        [string]$stderr = "",
+
+        [int]$exitCode = 0,
+
+        [ValidateNotNull()]
+        [array]$successCodes = @(0),
+
+        [switch]$continueOnError,
+
+        [switch]$rawOutput
+    )
+
+    if ($exitCode -notin $successCodes) {
         $module.Result.command_arguments = $arguments
-        # wsl logs errors as regular text, so we need to reassign the stdout to stderr
-        if ($stderr -eq "") {
+        if ((-not $rawOutput) -and ($stderr -eq "")) {
             $stderr = $stdout
             $stdout = ""
         }
         Write-StdText -module $module -stdout $stdout -stderr $stderr
-        $message = "WSL command returned an unexpected exit code, $($process.ExitCode)"
-        if ($stderr.length -gt 0) {
-            $message += ": $stderr"
+        if (-not $continueOnError) {
+            $message = "WSL command returned an unexpected exit code, $exitCode"
+            if ($stderr.length -gt 0) {
+                $message += ": $stderr"
+            }
+            $module.FailJson($message)
         }
-        $module.FailJson($message)
     }
-
-    if (($module.Params.log_command_output -eq $True)) {
-        Write-StdText -module $module -stdout $stdout -stderr $stderr
+    else {
+        if (($module.Params.log_command_output -eq $True)) {
+            Write-StdText -module $module -stdout $stdout -stderr $stderr
+        }
     }
-
-    return $stdout, $stderr
 }
 
 

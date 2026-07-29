@@ -20,9 +20,6 @@ DOCUMENTATION:
     - microsoft.wsl.wsl_command
 
   notes:
-    - This module requires that the distribution is running in order to read the config file.
-      It will start the distribution automatically, even in check mode. The module does not
-      take this action into account when reporting on changes.
     - It is possible that quotations around config values will cause the module to report a change
       as it reformats the config file, even though the actual value has not changed. This issue
       is self-correcting; it will only occur on the first run and not subsequent runs.
@@ -32,6 +29,14 @@ DOCUMENTATION:
     - To manage the entire file, including comments and whitespace, use M(ansible.windows.win_template).
       For a more surgical approach, consider M(community.windows.win_lineinfile) or scripting with
       M(ansible.windows.win_shell) or M(microsoft.wsl.command).
+
+  attributes:
+    check_mode:
+      support: partial
+      details:
+        - This module requires that the distribution is running in order to read the config file.
+        - It will start the distribution automatically, even in check mode. The module does not
+          take this action into account when reporting on changes.
 
   options:
     name:

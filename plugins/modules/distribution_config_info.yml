@@ -22,11 +22,6 @@ DOCUMENTATION:
     - ansible.builtin.action_common_attributes
     - microsoft.wsl.wsl_command
 
-  notes:
-    - This module requires that the distribution is running in order to read the config file.
-      It will start the distribution automatically, even in check mode. The module does not
-      take this action into account when reporting on changes.
-
   options:
     name:
       description:
@@ -48,6 +43,13 @@ DOCUMENTATION:
     - Mike Morency (@mikemorency)
 
   attributes:
+    check_mode:
+      support: partial
+      details:
+        - This module requires that the distribution is running in order to read the config file.
+        - It will start the distribution automatically, even in check mode. The module does not
+          take this action into account when reporting on changes.
+
     diff_mode:
       support: N/A
 
